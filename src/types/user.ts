@@ -5,21 +5,26 @@ export interface UserLicense {
   name: string;
 }
 
-export interface User extends BaseRecord {
+export interface User {
   user_id: number;
-  username: string;
   person_id: number;
-  profile_id: number;
-  full_name: string;
-  licenses: UserLicense[];
+  profile_id: number | null;
+  username: string;
+  last_login: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  person_name: string;
 }
 
 export interface UsersResponse {
   data: User[];
   meta: {
     total: number;
-    pages: number;
-    current_page: number;
     per_page: number;
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
   };
 }

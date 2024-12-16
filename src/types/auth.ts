@@ -4,7 +4,13 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    user_id: number;
+    username: string;
+    profile_id: number | null;
+  };
 }
 
 export interface UserProfile {

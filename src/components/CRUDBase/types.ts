@@ -42,3 +42,21 @@ export interface CRUDBaseProps<T extends BaseRecord> {
   onPageChange: (page: number) => void;
   isLoading?: boolean;
 }
+
+export interface UseCRUDBaseProps<T> {
+  fetchData: (
+    page: number, 
+    limit: number, 
+    search?: string
+  ) => Promise<{
+    data: T[];
+    total?: number;
+    page?: number;
+    limit?: number;
+  }>;
+  initialState?: {
+    viewMode?: 'table' | 'grid';
+    itemsPerPage?: number;
+  };
+  preventMultipleCalls?: boolean;
+}

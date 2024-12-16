@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
 import { AuthService } from './AuthService';
 
@@ -28,21 +28,38 @@ class ApiService {
   private setupInterceptors(): void {
     this.api.interceptors.request.use(
       (config) => {
+        console.error('API Request:', {
+          url: config.url,
+          method: config.method,
+          data: config.data
+        });
         const token = AuthService.getToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => {
+        console.error('API Request Error:', error);
+        return Promise.reject(error)
+      }
     );
 
     this.api.interceptors.response.use(
       (response: AxiosResponse) => {
-        // Ensure we're returning a plain object without Symbols
-        return JSON.parse(JSON.stringify(response.data));
+        console.log('API Response:', {
+          status: response.status,
+          data: response.data
+        });
+        return response;
       },
       (error: AxiosError) => {
+        console.error('API Response Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+        
         if (error.response) {
           const status = error.response.status;
           const data = error.response.data as any;
@@ -78,12 +95,43 @@ class ApiService {
     );
   }
 
-  public async get<T>(url: string, config?: object): Promise<T> {
+  public async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await this.api.get<T, T>(url, config);
-      return response;
+      console.log('🌐 API Request:', { url, method: 'get', data: config?.data });
+      const response = await this.api.get<string>(url, config);
+      
+      console.log('🌐 Raw Response Data (Type):', typeof response.data);
+      console.log('🌐 Raw Response Data (Keys):', Object.keys(response.data || {}));
+      console.log('🌐 Raw Response Data:', JSON.stringify(response.data, null, 2));
+      
+      // Garantir que o parsing da resposta seja feito corretamente
+      const responseData = typeof response.data === 'string' 
+        ? JSON.parse(response.data) 
+        : response.data;
+
+      console.log('🌐 Parsed Response Data:', {
+        status: response.status,
+        headers: response.headers,
+        data: responseData
+      });
+      
+      return responseData as T;
     } catch (error) {
-      throw error;
+      if (axios.isAxiosError(error)) {
+        console.error('❌ API Response Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+          config: error.config
+        });
+
+        if (error.response?.status === 401) {
+          AuthService.logout();
+        }
+
+        toast.error('Ocorreu um erro na requisição.');
+      }
+      return Promise.reject(error);
     }
   }
 

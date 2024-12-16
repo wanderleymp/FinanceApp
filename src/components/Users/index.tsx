@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FileSpreadsheet, FileText } from 'lucide-react';
 import { CRUDBase } from '../CRUDBase';
 import { UserService } from '../../services/UserService';
@@ -16,12 +16,17 @@ const columns = [
   },
   {
     header: 'Nome Completo',
-    accessorKey: 'full_name',
+    accessorKey: 'person_name',
   },
   {
-    header: 'Licenças',
-    accessorKey: 'licenses',
-    cell: (info: any) => info.getValue().map((license: any) => license.name).join(', '),
+    header: 'Status',
+    accessorKey: 'active',
+    cell: (info: any) => info.getValue() ? 'Ativo' : 'Inativo',
+  },
+  {
+    header: 'Último Login',
+    accessorKey: 'last_login',
+    cell: (info: any) => info.getValue() || 'Nunca logado',
   },
 ];
 
@@ -36,28 +41,33 @@ export const Users: React.FC = () => {
     totalItems: 0,
     itemsPerPage: 10,
   });
+  const isMountedRef = useRef(false);
 
-  const fetchUsers = async (page: number = 1) => {
+  const fetchUsers = useCallback(async (page: number = 1) => {
     try {
       setIsLoading(true);
-      const response: UsersResponse = await UserService.getUsers(page, pagination.itemsPerPage);
+      const response: UsersResponse = await UserService.getUsers(page, pagination.itemsPerPage, searchTerm);
       setUsers(response.data);
       setPagination({
         currentPage: response.meta.current_page,
-        totalPages: response.meta.pages,
+        totalPages: response.meta.last_page,
         totalItems: response.meta.total,
         itemsPerPage: response.meta.per_page,
       });
     } catch (error) {
       toast.error('Erro ao carregar usuários');
+      console.error('Erro ao carregar usuários:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.itemsPerPage, searchTerm]);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (!isMountedRef.current) {
+      fetchUsers();
+      isMountedRef.current = true;
+    }
+  }, [fetchUsers]);
 
   const handleDelete = async (user: User) => {
     try {
@@ -93,57 +103,43 @@ export const Users: React.FC = () => {
 
   const renderUserCard = (user: User) => (
     <div>
-      <h3 className="font-medium">{user.full_name}</h3>
+      <h3 className="font-medium">{user.person_name}</h3>
       <p className="text-sm text-gray-500 mt-1">{user.username}</p>
       <div className="mt-2">
-        <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-          {user.licenses.map(license => license.name).join(', ')}
+        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+          user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {user.active ? 'Ativo' : 'Inativo'}
         </span>
       </div>
     </div>
   );
 
-  const metrics = [
-    {
-      title: 'Total de Usuários',
-      value: pagination.totalItems,
-      trend: 12.5,
-      color: 'bg-white border border-gray-200',
-    },
-    {
-      title: 'Usuários Ativos',
-      value: Math.floor(pagination.totalItems * 0.85),
-      trend: 8.2,
-      color: 'bg-white border border-gray-200',
-    },
-    {
-      title: 'Taxa de Ativação',
-      value: '85%',
-      trend: -2.1,
-      color: 'bg-white border border-gray-200',
-    },
-  ];
-
   return (
     <CRUDBase
-      title="Gerenciamento de Usuários"
-      subtitle="Gerencie os usuários do sistema"
+      title="Usuários"
       data={users}
       columns={columns}
-      renderCard={renderUserCard}
-      metrics={metrics}
-      onAdd={() => toast('Adicionar usuário em desenvolvimento', { icon: '🔨' })}
-      onEdit={(user: User) => toast(`Editar usuário ${user.username}`, { icon: '✏️' })}
-      onDelete={handleDelete}
-      onExportExcel={handleExportExcel}
-      onExportPDF={handleExportPDF}
-      searchTerm={searchTerm}
-      onSearchChange={handleSearch}
-      viewMode={viewMode}
-      onViewModeChange={handleViewModeChange}
-      pagination={pagination}
-      onPageChange={handlePageChange}
       isLoading={isLoading}
+      viewMode={viewMode}
+      pagination={pagination}
+      renderCard={renderUserCard}
+      onDelete={handleDelete}
+      onPageChange={handlePageChange}
+      onSearch={handleSearch}
+      onViewModeChange={handleViewModeChange}
+      exportOptions={[
+        {
+          label: 'Excel',
+          icon: <FileSpreadsheet className="w-4 h-4" />,
+          onClick: handleExportExcel
+        },
+        {
+          label: 'PDF',
+          icon: <FileText className="w-4 h-4" />,
+          onClick: handleExportPDF
+        }
+      ]}
     />
   );
 };

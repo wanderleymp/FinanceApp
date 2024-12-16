@@ -4,7 +4,7 @@ import { MetricsHeader } from './components/MetricsHeader';
 import { ActionHeader } from './components/ActionHeader';
 import { TableView } from './TableView';
 import { CardView } from './CardView';
-import { Pagination } from './components/Pagination';
+import { Pagination } from './components/Pagination'; 
 
 export function CRUDBase<T extends BaseRecord>({
   title,
@@ -70,13 +70,17 @@ export function CRUDBase<T extends BaseRecord>({
               renderCustomActions={renderCustomActions}
             />
           )}
-        </div>
 
-        <Pagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          onPageChange={onPageChange}
-        />
+          {pagination && onPageChange && (
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                currentPage={pagination.current_page || pagination.currentPage}
+                totalPages={pagination.last_page || pagination.totalPages}
+                onPageChange={onPageChange}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

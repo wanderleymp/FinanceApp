@@ -43,9 +43,11 @@ export const LoginForm: React.FC = () => {
 
     setIsLoading(true);
     try {
+      console.log('Login Form Submission:', { username: formData.identifier, password: formData.password });
       await login(formData.identifier, formData.password);
     } catch (error) {
-      // Error is already handled by the login function
+      console.error('Login Form Error:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro desconhecido no login');
     } finally {
       setIsLoading(false);
     }

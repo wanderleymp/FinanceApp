@@ -21,13 +21,12 @@ export const PersonList: React.FC = () => {
     isLoading,
     viewMode,
     searchTerm,
-    pagination,
-    handleSearch,
-    handlePageChange,
+    onSearchChange,
     handleViewModeChange,
     handleToggleStatus,
     handleCreatePersonByCNPJ,
     loadData,
+    pagination,
   } = usePersons();
 
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
@@ -72,7 +71,7 @@ export const PersonList: React.FC = () => {
   const metrics = [
     {
       title: 'Total de Pessoas',
-      value: pagination.totalItems,
+      value: persons.length,
       trend: 12.5,
       color: 'bg-gradient-to-br from-blue-500 to-blue-600',
       textColor: 'text-white',
@@ -124,12 +123,12 @@ export const PersonList: React.FC = () => {
         onExportPDF={handleExportPDF}
         onToggleStatus={handleToggleStatus}
         searchTerm={searchTerm}
-        onSearchChange={handleSearch}
+        onSearchChange={onSearchChange}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
-        pagination={pagination}
-        onPageChange={handlePageChange}
         isLoading={isLoading}
+        pagination={pagination}
+        onPageChange={loadData}
       />
 
       {selectedPerson && (
@@ -140,7 +139,7 @@ export const PersonList: React.FC = () => {
             onClose={() => setIsContactsModalOpen(false)}
             onSave={() => {
               setIsContactsModalOpen(false);
-              loadData(pagination.currentPage);
+              loadData(1);
             }}
           />
           <PersonLocationModal
@@ -149,7 +148,7 @@ export const PersonList: React.FC = () => {
             onClose={() => setIsLocationModalOpen(false)}
             onSave={() => {
               setIsLocationModalOpen(false);
-              loadData(pagination.currentPage);
+              loadData(1);
             }}
           />
           <PersonDocumentsModal
@@ -158,7 +157,7 @@ export const PersonList: React.FC = () => {
             onClose={() => setIsDocumentsModalOpen(false)}
             onSave={() => {
               setIsDocumentsModalOpen(false);
-              loadData(pagination.currentPage);
+              loadData(1);
             }}
           />
         </>

@@ -1,42 +1,65 @@
 import { jwtDecode } from 'jwt-decode';
-import { LoginCredentials, LoginResponse, User, DecodedToken } from '../types/auth';
+import { LoginCredentials, LoginResponse, User, DecodedToken, UserData } from '../types/auth';
 import apiService from './ApiService';
 import { messages } from '../constants/messages';
 
 export class AuthService {
-  private static readonly TOKEN_KEY = '@AgileFinance:token';
+  private static readonly TOKEN_KEY = 'accessToken';
+  private static readonly REFRESH_TOKEN_KEY = 'refreshToken';
+  private static readonly USER_KEY = 'user';
   private static readonly TOKEN_EXPIRY_THRESHOLD = 5 * 60; // 5 minutes in seconds
 
-  public static async login(credentials: LoginCredentials): Promise<void> {
+  public static async login(username: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await apiService.post<LoginResponse>('/auth/login', credentials);
-      this.setToken(response.token);
-      
-      // Setup token refresh
-      this.setupTokenRefresh(response.token);
+      const response = await apiService.post<LoginResponse>('/users/login', {
+        username,
+        password
+      });
+
+      console.log('Login Response:', response.data);
+
+      if (response.data.accessToken) {
+        localStorage.setItem(this.TOKEN_KEY, response.data.accessToken);
+        localStorage.setItem(this.REFRESH_TOKEN_KEY, response.data.refreshToken);
+        localStorage.setItem(this.USER_KEY, JSON.stringify(response.data.user));
+      }
+
+      return response.data;
     } catch (error) {
-      throw new Error(messages.auth.invalidCredentials);
+      console.error('Login Error:', error);
+      throw error;
     }
   }
 
   public static async getCurrentUser(): Promise<User> {
     try {
-      return await apiService.get<User>('/auth/me');
+      const storedUser = localStorage.getItem(this.USER_KEY);
+      if (storedUser) {
+        return JSON.parse(storedUser);
+      }
+      
+      // Fallback to fetching from server if no stored user
+      const response = await apiService.get<User>('/users/me');
+      return response;
     } catch (error) {
+      console.error('Get Current User Error:', error);
       throw new Error(messages.auth.sessionExpired);
     }
-  }
+  };
 
   public static logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
   }
 
   public static getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
-  private static setToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
+  public static getUserData(): UserData | null {
+    const userJson = localStorage.getItem(this.USER_KEY);
+    return userJson ? JSON.parse(userJson) : null;
   }
 
   public static isAuthenticated(): boolean {
@@ -81,9 +104,12 @@ export class AuthService {
 
   private static async refreshToken(): Promise<void> {
     try {
-      const response = await apiService.post<LoginResponse>('/auth/refresh');
-      this.setToken(response.token);
-      this.setupTokenRefresh(response.token);
+      const response = await apiService.post<LoginResponse>('/auth/refresh', {
+        refresh_token: localStorage.getItem(this.REFRESH_TOKEN_KEY)
+      });
+      localStorage.setItem(this.TOKEN_KEY, response.accessToken);
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
+      this.setupTokenRefresh(response.accessToken);
     } catch (error) {
       this.logout();
       throw new Error(messages.auth.tokenRefreshError);

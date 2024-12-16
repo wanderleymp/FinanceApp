@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { Person } from '../../../types/person';
 import { PersonService } from '../../../services/PersonService';
@@ -7,6 +7,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 export const usePersons = () => {
   const { user } = useAuth();
+  const isMountedRef = useRef(false);
 
   const fetchPersons = useCallback(async (page: number, limit: number, search?: string) => {
     try {
@@ -22,28 +23,20 @@ export const usePersons = () => {
     isLoading,
     viewMode,
     searchTerm,
-    pagination,
-    handleSearch,
-    handlePageChange,
+    handleSearchChange,
     handleViewModeChange,
+    handleToggleStatus,
     handleItemsPerPageChange,
     loadData,
+    pagination
   } = useCRUDBase<Person>({
     fetchData: fetchPersons,
+    initialState: {
+      viewMode: 'table',
+      itemsPerPage: 10
+    },
+    preventMultipleCalls: true
   });
-
-  const handleToggleStatus = async (person: Person) => {
-    try {
-      await PersonService.updatePerson(person.id, {
-        ...person,
-        status: person.status === 'active' ? 'inactive' : 'active',
-      });
-      toast.success('Status atualizado com sucesso');
-      loadData(pagination.currentPage);
-    } catch (error) {
-      toast.error('Erro ao atualizar status');
-    }
-  };
 
   const handleCreatePersonByCNPJ = async (cnpj: string) => {
     try {
@@ -65,13 +58,11 @@ export const usePersons = () => {
     isLoading,
     viewMode,
     searchTerm,
-    pagination,
-    handleSearch,
-    handlePageChange,
+    onSearchChange: handleSearchChange,
     handleViewModeChange,
-    handleItemsPerPageChange,
     handleToggleStatus,
     handleCreatePersonByCNPJ,
     loadData,
+    pagination
   };
 };

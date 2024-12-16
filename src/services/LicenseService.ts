@@ -52,17 +52,13 @@ export class LicenseService {
 
       const response = await apiService.get<any>(`${this.BASE_URL}?${params.toString()}`);
       
-      if (!response.data || !response.pagination) {
-        throw new Error('Invalid response format');
-      }
-
       return {
         data: response.data.map((item: any) => this.transformLicenseData(item)),
         meta: {
-          total: response.pagination.total || 0,
-          pages: response.pagination.totalPages || 1,
-          current_page: response.pagination.currentPage || 1,
-          per_page: response.pagination.perPage || limit
+          total: response.meta.total || 0,
+          pages: response.meta.last_page || 1,
+          current_page: response.meta.current_page || 1,
+          per_page: response.meta.per_page || limit
         }
       };
     } catch (error) {

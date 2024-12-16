@@ -108,7 +108,6 @@ export const ServiceList: React.FC = () => {
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
           pagination={pagination}
-          onPageChange={handlePageChange}
           isLoading={isLoading}
           renderCustomActions={renderCustomActions}
         />
