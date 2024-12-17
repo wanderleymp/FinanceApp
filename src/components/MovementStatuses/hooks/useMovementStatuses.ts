@@ -9,7 +9,7 @@ export const useMovementStatuses = () => {
 
   const fetchMovementStatuses = useCallback(async (page: number, limit: number, search?: string) => {
     try {
-      const response = await MovementStatusService.getMovementStatuses(page, limit, activeFilter, search);
+      const response = await MovementStatusService.getMovementStatuses(page, limit, search);
       return {
         data: response.data,
         meta: {
@@ -24,7 +24,7 @@ export const useMovementStatuses = () => {
       toast.error('Erro ao carregar status de movimento');
       throw error;
     }
-  }, [activeFilter]);
+  }, []);
 
   const {
     data: movementStatuses,
@@ -49,13 +49,9 @@ export const useMovementStatuses = () => {
       await MovementStatusService.toggleMovementStatus(status.movement_status_id);
       loadData(pagination.currentPage);
     } catch (error) {
-      toast.error('Erro ao alterar status');
+      console.error('Error toggling movement status:', error);
+      toast.error('Erro ao alternar status de movimento');
     }
-  };
-
-  const handleActiveFilterChange = (value: 'true' | 'false' | 'all') => {
-    setActiveFilter(value);
-    loadData(1);
   };
 
   return {
@@ -64,12 +60,11 @@ export const useMovementStatuses = () => {
     viewMode,
     searchTerm,
     pagination,
-    activeFilter,
     handleSearch,
     handlePageChange,
     handleViewModeChange,
     handleToggleStatus,
-    handleActiveFilterChange,
-    loadData,
+    activeFilter,
+    setActiveFilter
   };
 };

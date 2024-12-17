@@ -1,12 +1,12 @@
 import React from 'react';
 import { MapPin, Search } from 'lucide-react';
-import { Address } from '../../../../types/person';
+import { PersonAddress } from '../../../../types/person';
 import { PersonService } from '../../../../services/PersonService';
 import { toast } from 'react-hot-toast';
 
 interface AddressSectionProps {
-  address?: Address;
-  onChange: (address: Address) => void;
+  address?: PersonAddress;
+  onChange: (address: PersonAddress) => void;
 }
 
 export const AddressSection: React.FC<AddressSectionProps> = ({
@@ -22,14 +22,19 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   },
   onChange,
 }) => {
+  const formatCEP = (cep: string) => {
+    return cep.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, '$1-$2');
+  };
+
   const handleCEPSearch = async () => {
-    if (!address.postal_code || address.postal_code.length !== 8) {
+    const cleanCEP = address.postal_code.replace(/\D/g, '');
+    if (!cleanCEP || cleanCEP.length !== 8) {
       toast.error('Digite um CEP válido');
       return;
     }
 
     try {
-      const data = await PersonService.searchCEP(address.postal_code);
+      const data = await PersonService.searchCEP(cleanCEP);
       onChange({
         ...address,
         street: data.logradouro,
@@ -58,8 +63,11 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
           <div className="flex gap-2">
             <input
               type="text"
-              value={address.postal_code}
-              onChange={(e) => onChange({ ...address, postal_code: e.target.value })}
+              value={formatCEP(address.postal_code)}
+              onChange={(e) => onChange({ 
+                ...address, 
+                postal_code: e.target.value.replace(/\D/g, '') 
+              })}
               placeholder="00000-000"
               className="flex-1 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
             />

@@ -29,69 +29,57 @@ export class MovementTypeService {
       });
 
       if (search) {
-        params.append('search', search);
+        params.append('type_name', search);
       }
 
       const response = await apiService.get<any>(`${this.BASE_URL}?${params.toString()}`);
       
-      if (!response?.data || !response?.pagination) {
-        throw new Error('Invalid response format');
-      }
-
       return {
         data: response.data.map(this.transformMovementType),
         pagination: {
-          total: response.pagination.total || 0,
-          totalPages: response.pagination.totalPages || 1,
-          currentPage: response.pagination.currentPage || 1,
-          perPage: response.pagination.perPage || limit,
-          hasNext: response.pagination.hasNext || false,
-          hasPrevious: response.pagination.hasPrevious || false
+          total: response.meta.total || 0,
+          totalPages: response.meta.last_page || 1,
+          currentPage: response.meta.current_page || 1,
+          perPage: response.meta.per_page || limit,
+          hasNext: response.meta.current_page < response.meta.last_page,
+          hasPrevious: response.meta.current_page > 1
         }
       };
     } catch (error) {
-      console.error('Error fetching movement types:', error);
+      toast.error('Erro ao buscar tipos de movimentação');
       throw error;
     }
   }
 
-  public static async getMovementType(id: number): Promise<MovementType> {
+  public static async getMovementTypeById(id: number): Promise<MovementType> {
     try {
       const response = await apiService.get<any>(`${this.BASE_URL}/${id}`);
-      if (!response) {
-        throw new Error('Movement type not found');
-      }
       return this.transformMovementType(response);
     } catch (error) {
-      console.error('Error fetching movement type:', error);
+      toast.error('Erro ao buscar tipo de movimentação');
       throw error;
     }
   }
 
-  public static async createMovementType(type_name: string): Promise<MovementType> {
+  public static async createMovementType(data: { type_name: string }): Promise<MovementType> {
     try {
-      const response = await apiService.post<any>(this.BASE_URL, { type_name });
-      if (!response) {
-        throw new Error('Error creating movement type');
-      }
-      toast.success('Tipo de movimento criado com sucesso');
+      const response = await apiService.post<any>(this.BASE_URL, data);
       return this.transformMovementType(response);
     } catch (error) {
-      console.error('Error creating movement type:', error);
+      toast.error('Erro ao criar tipo de movimentação');
       throw error;
     }
   }
 
-  public static async updateMovementType(id: number, type_name: string): Promise<MovementType> {
+  public static async updateMovementType(
+    id: number, 
+    data: { type_name: string }
+  ): Promise<MovementType> {
     try {
-      const response = await apiService.put<any>(`${this.BASE_URL}/${id}`, { type_name });
-      if (!response) {
-        throw new Error('Error updating movement type');
-      }
-      toast.success('Tipo de movimento atualizado com sucesso');
+      const response = await apiService.put<any>(`${this.BASE_URL}/${id}`, data);
       return this.transformMovementType(response);
     } catch (error) {
-      console.error('Error updating movement type:', error);
+      toast.error('Erro ao atualizar tipo de movimentação');
       throw error;
     }
   }
@@ -99,13 +87,9 @@ export class MovementTypeService {
   public static async deleteMovementType(id: number): Promise<void> {
     try {
       await apiService.delete(`${this.BASE_URL}/${id}`);
-      toast.success('Tipo de movimento excluído com sucesso');
-    } catch (error: any) {
-      if (error.response?.status === 422) {
-        toast.error('Não é possível excluir este tipo de movimento pois existem registros vinculados');
-      } else {
-        toast.error('Erro ao excluir tipo de movimento');
-      }
+      toast.success('Tipo de movimentação excluído com sucesso');
+    } catch (error) {
+      toast.error('Erro ao excluir tipo de movimentação');
       throw error;
     }
   }

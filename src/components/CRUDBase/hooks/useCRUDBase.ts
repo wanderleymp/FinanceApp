@@ -46,6 +46,7 @@ export function useCRUDBase<T>(props: UseCRUDBaseProps<T>) {
   } | null>(null);
 
   const loadData = useCallback(async (page: number = 1, search?: string) => {
+    console.log('LoadData called with:', { page, search });
     if (preventMultipleCalls && 
         lastFetchParamsRef.current?.page === page && 
         lastFetchParamsRef.current?.search === search) {
@@ -55,6 +56,8 @@ export function useCRUDBase<T>(props: UseCRUDBaseProps<T>) {
     try {
       setIsLoading(true);
       const result = await fetchData(page, pagination.itemsPerPage, search);
+      
+      console.log('LoadData fetchData result:', result);
       
       setData(result.data || []);
       setPagination(prev => ({

@@ -1,5 +1,5 @@
 import apiService from './ApiService';
-import { Person, PersonsResponse } from '../types/person';
+import { Person, PersonsResponse, PersonContact } from '../types/person';
 
 export class PersonService {
   private static readonly BASE_URL = '/persons';
@@ -66,22 +66,43 @@ export class PersonService {
   }
 
   public static async getPerson(id: number): Promise<Person> {
-    return await apiService.get<Person>(`${this.BASE_URL}/${id}`);
+    const person = await apiService.get<Person>(`${this.BASE_URL}/${id}`);
+    console.log('Documentos da pessoa:', person.documents);
+    return person;
   }
 
   public static async createPerson(data: Partial<Person>): Promise<Person> {
     return await apiService.post<Person>(this.BASE_URL, data);
   }
 
-  public static async createPersonByCNPJ(cnpj: string, licenseId: number): Promise<Person> {
+  public static async createPersonByCNPJ(cnpj: string): Promise<Person> {
     try {
-      const response = await apiService.post('/persons/create-by-cnpj', { 
-        cnpj, 
-        license_id: licenseId 
+      console.log('[DEBUG] PersonService - Creating person by CNPJ:', { 
+        cnpj: cnpj.replace(/\D/g, ''),
+        raw_cnpj: cnpj
       });
+
+      const cleanCNPJ = cnpj.replace(/\D/g, '');
+      
+      if (cleanCNPJ.length !== 14) {
+        const errorMsg = 'CNPJ inválido: deve conter 14 dígitos';
+        console.error(`[DEBUG] PersonService - ${errorMsg}`);
+        throw new Error(errorMsg);
+      }
+
+      console.log('[DEBUG] PersonService - Preparing POST request to create person by CNPJ');
+      const response = await apiService.post(`/persons/cnpj/${cleanCNPJ}`, {});
+      
+      console.log('[DEBUG] PersonService - Response from creating person by CNPJ:', response);
       return response.data;
-    } catch (error) {
-      console.error('Error creating person by CNPJ:', error);
+    } catch (error: any) {
+      console.error('[DEBUG] PersonService - Detailed error creating person by CNPJ:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+        stack: error.stack
+      });
       throw error;
     }
   }
@@ -118,5 +139,44 @@ export class PersonService {
 
   public static async deleteContact(personId: number, contactId: number): Promise<void> {
     await apiService.delete(`${this.BASE_URL}/${personId}/contacts/${contactId}`);
+  }
+
+  public static async deletePersonContact(personContactId: number): Promise<void> {
+    if (!personContactId) {
+      console.error('ID de contato inválido:', personContactId);
+      throw new Error('ID de contato inválido');
+    }
+
+    try {
+      console.log('🗑️ Iniciando deleção de contato:', { 
+        personContactId, 
+        endpoint: `/person-contact/${personContactId}` 
+      });
+
+      const response = await apiService.delete(`/person-contact/${personContactId}`);
+      
+      console.log('✅ Resposta da deleção:', {
+        status: response.status,
+        data: response.data
+      });
+    } catch (error) {
+      console.error('❌ Erro detalhado ao deletar contato:', {
+        errorType: error instanceof Error ? error.name : 'Unknown Error',
+        message: error instanceof Error ? error.message : 'Sem mensagem de erro',
+        stack: error instanceof Error ? error.stack : 'Sem stack trace',
+        personContactId
+      });
+      throw error;
+    }
+  }
+
+  public static async searchContacts(searchTerm: string): Promise<PersonContact[]> {
+    try {
+      const response = await apiService.get(`/contacts?search=${encodeURIComponent(searchTerm)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar contatos:', error);
+      throw error;
+    }
   }
 }

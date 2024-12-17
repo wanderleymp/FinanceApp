@@ -1,29 +1,41 @@
 import React, { useState } from 'react';
 import { FileText, Plus, Trash2 } from 'lucide-react';
-import { Document } from '../../../../types/person';
+import { PersonDocument } from '../../../../types/person';
 
 interface DocumentsSectionProps {
-  documents: Document[];
-  onChange: (documents: Document[]) => void;
+  documents: PersonDocument[];
+  onChange: (documents: PersonDocument[]) => void;
 }
 
 export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
   documents,
   onChange,
 }) => {
-  const [newDocument, setNewDocument] = useState<Partial<Document>>({
-    type_id: 1,
-    value: '',
+  const [newDocument, setNewDocument] = useState<Partial<PersonDocument>>({
+    document_type: 'CPF',
+    document_value: '',
   });
 
   const handleAddDocument = () => {
-    if (!newDocument.value) return;
-    onChange([...documents, { ...newDocument, id: Date.now() } as Document]);
-    setNewDocument({ type_id: 1, value: '' });
+    if (!newDocument.document_value) return;
+    onChange([...documents, { 
+      ...newDocument, 
+      person_document_id: Date.now() 
+    } as PersonDocument]);
+    setNewDocument({ document_type: 'CPF', document_value: '' });
   };
 
   const handleRemoveDocument = (index: number) => {
     onChange(documents.filter((_, i) => i !== index));
+  };
+
+  const formatDocument = (type: string, value: string) => {
+    if (type === 'CPF') {
+      return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    } else if (type === 'CNPJ') {
+      return value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    return value;
   };
 
   return (
@@ -34,20 +46,20 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <select
-              value={newDocument.type_id}
-              onChange={(e) => setNewDocument({ ...newDocument, type_id: Number(e.target.value) })}
+              value={newDocument.document_type}
+              onChange={(e) => setNewDocument({ ...newDocument, document_type: e.target.value })}
               className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
             >
-              <option value={1}>CPF</option>
-              <option value={2}>CNPJ</option>
-              <option value={3}>RG</option>
+              <option value="CPF">CPF</option>
+              <option value="CNPJ">CNPJ</option>
+              <option value="RG">RG</option>
             </select>
           </div>
           <div>
             <input
               type="text"
-              value={newDocument.value}
-              onChange={(e) => setNewDocument({ ...newDocument, value: e.target.value })}
+              value={newDocument.document_value}
+              onChange={(e) => setNewDocument({ ...newDocument, document_value: e.target.value })}
               placeholder="Número do documento"
               className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
             />
@@ -67,12 +79,17 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
         <div className="mt-6 space-y-4">
           {documents.map((document, index) => (
             <div
-              key={document.id || index}
+              key={document.person_document_id || index}
               className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
             >
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5 text-blue-500" />
-                <p className="font-medium">{document.value}</p>
+                <div>
+                  <p className="font-medium">
+                    {formatDocument(document.document_type, document.document_value)}
+                  </p>
+                  <p className="text-sm text-gray-500">{document.document_type}</p>
+                </div>
               </div>
               <button
                 type="button"

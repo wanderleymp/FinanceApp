@@ -14,7 +14,6 @@ export const ServiceList: React.FC = () => {
     viewMode,
     searchTerm,
     pagination,
-    metrics,
     activeFilter,
     handleSearch,
     handlePageChange,
@@ -47,6 +46,34 @@ export const ServiceList: React.FC = () => {
       <Edit2 className="w-4 h-4 text-orange-500 group-hover:text-orange-600" />
     </button>
   );
+
+  const metrics = [
+    {
+      title: 'Total de Serviços',
+      value: pagination.total || services.length,
+      trend: 12.5,
+      color: 'bg-gradient-to-br from-blue-500 to-blue-600',
+      textColor: 'text-white',
+    },
+    {
+      title: 'Serviços Ativos',
+      value: pagination.total 
+        ? services.filter(s => s.status === 'active').length 
+        : services.filter(s => s.status === 'active').length,
+      trend: 8.2,
+      color: 'bg-gradient-to-br from-green-500 to-green-600',
+      textColor: 'text-white',
+    },
+    {
+      title: 'Serviços Inativos',
+      value: pagination.total 
+        ? services.filter(s => s.status === 'inactive').length 
+        : services.filter(s => s.status === 'inactive').length,
+      trend: -2.1,
+      color: 'bg-gradient-to-br from-purple-500 to-purple-600',
+      textColor: 'text-white',
+    },
+  ];
 
   return (
     <>

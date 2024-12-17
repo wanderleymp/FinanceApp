@@ -15,7 +15,8 @@ import {
   ListChecks,
   ShoppingCart,
   Wallet,
-  Package2
+  Package2,
+  FileText
 } from 'lucide-react';
 
 interface MenuItem {
@@ -31,11 +32,22 @@ const menuItems: MenuItem[] = [
     icon: ArrowDownUp,
     label: 'Financeiro',
     children: [
+      { icon: ArrowDownUp, label: 'Movimento Geral', path: '/movements' },
       { icon: ShoppingCart, label: 'Vendas', path: '/sales' },
       { icon: Wallet, label: 'Contas a Receber', path: '/accounts-receivable' },
       { icon: ArrowDownUp, label: 'Tipos de Movimento', path: '/movement-types' },
       { icon: ListChecks, label: 'Status de Movimento', path: '/movement-statuses' },
       { icon: CreditCard, label: 'Métodos de Pagamento', path: '/payment-methods' },
+    ]
+  },
+  {
+    icon: FileText,
+    label: 'Contratos',
+    children: [
+      { icon: FileText, label: 'Lista de Contratos', path: '/contracts' },
+      { icon: FileText, label: 'Novo Contrato', path: '/contracts/new' },
+      { icon: FileText, label: 'Tipos de Contrato', path: '/contract-types' },
+      { icon: FileText, label: 'Status de Contrato', path: '/contract-statuses' },
     ]
   },
   {

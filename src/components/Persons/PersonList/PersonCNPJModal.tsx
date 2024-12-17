@@ -19,6 +19,8 @@ export const PersonCNPJModal: React.FC<PersonCNPJModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('[DEBUG] CNPJ Modal - Submitting CNPJ:', cnpj);
+
     if (!cnpj.trim()) {
       toast.error('Digite o CNPJ');
       return;
@@ -26,10 +28,13 @@ export const PersonCNPJModal: React.FC<PersonCNPJModalProps> = ({
 
     try {
       setIsLoading(true);
+      console.log('[DEBUG] CNPJ Modal - Before onSubmit');
       await onSubmit(cnpj);
+      console.log('[DEBUG] CNPJ Modal - onSubmit completed successfully');
       onClose();
     } catch (error) {
-      // Error is handled by the parent component
+      console.error('[DEBUG] CNPJ Modal - Complete submission error:', error);
+      toast.error(`Erro ao criar pessoa jurídica: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setIsLoading(false);
     }

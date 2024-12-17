@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Building2, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { Person } from '../../../types/person';
+import { Person, PersonAddress } from '../../../types/person';
 import { PersonService } from '../../../services/PersonService';
 import { MainSection } from './sections/MainSection';
 import { ContactsSection } from './sections/ContactsSection';
@@ -16,7 +16,7 @@ const initialState: Partial<Person> = {
   person_type_id: 1,
   documents: [],
   contacts: [],
-  address: {
+  addresses: [{
     postal_code: '',
     street: '',
     number: '',
@@ -25,29 +25,66 @@ const initialState: Partial<Person> = {
     city: '',
     state: '',
     country: 'Brasil',
-  },
+  }],
 };
 
 export const PersonForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const [formData, setFormData] = useState<Partial<Person>>(initialState);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
-      loadPerson(Number(id));
+      const navigationState = location.state as { personData?: Person };
+      if (navigationState?.personData) {
+        // Use dados passados na navegação
+        setFormData(navigationState.personData);
+      } else {
+        // Fallback para buscar dados do backend
+        loadPerson(Number(id));
+      }
     }
-  }, [id]);
+  }, [id, location.state]);
 
   const loadPerson = async (personId: number) => {
     try {
       setIsLoading(true);
       const person = await PersonService.getPerson(personId);
+      console.log('Pessoa carregada:', JSON.stringify(person, null, 2));
       setFormData(person);
     } catch (error) {
       toast.error('Erro ao carregar dados da pessoa');
       navigate('/persons');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = async (searchTerm: string) => {
+    try {
+      setIsLoading(true);
+      const data = await PersonService.search(searchTerm);
+      setFormData(prev => ({
+        ...prev,
+        full_name: data.razao_social,
+        fantasy_name: data.nome_fantasia,
+        person_type_id: 2,
+        addresses: [{
+          postal_code: data.cep,
+          street: data.logradouro,
+          number: data.numero,
+          complement: data.complemento,
+          neighborhood: data.bairro,
+          city: data.municipio,
+          state: data.uf,
+          country: 'Brasil',
+        }],
+      }));
+      toast.success('Dados carregados com sucesso');
+    } catch (error) {
+      toast.error('Erro ao consultar');
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +99,7 @@ export const PersonForm: React.FC = () => {
         full_name: data.razao_social,
         fantasy_name: data.nome_fantasia,
         person_type_id: 2,
-        address: {
+        addresses: [{
           postal_code: data.cep,
           street: data.logradouro,
           number: data.numero,
@@ -71,7 +108,7 @@ export const PersonForm: React.FC = () => {
           city: data.municipio,
           state: data.uf,
           country: 'Brasil',
-        },
+        }],
       }));
       toast.success('Dados carregados com sucesso');
     } catch (error) {
@@ -128,6 +165,7 @@ export const PersonForm: React.FC = () => {
         <MainSection
           formData={formData}
           setFormData={setFormData}
+          onSearch={handleSearch}
           onCNPJSearch={handleCNPJSearch}
           isLoading={isLoading}
         />
@@ -136,7 +174,10 @@ export const PersonForm: React.FC = () => {
           <div className="space-y-6">
             <DocumentsSection
               documents={formData.documents || []}
-              onChange={(documents) => setFormData({ ...formData, documents })}
+              onChange={(documents) => {
+                console.log('Documentos atualizados:', documents);
+                setFormData({ ...formData, documents });
+              }}
             />
             <ContactsSection
               contacts={formData.contacts || []}
@@ -145,8 +186,8 @@ export const PersonForm: React.FC = () => {
           </div>
           <div className="space-y-6">
             <AddressSection
-              address={formData.address}
-              onChange={(address) => setFormData({ ...formData, address })}
+              address={formData.addresses && formData.addresses[0]}
+              onChange={(address: PersonAddress) => setFormData({ ...formData, addresses: [address] })}
             />
             {formData.person_type_id === 2 && (
               <CNAESection

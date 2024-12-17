@@ -21,7 +21,12 @@ export const renderPersonCard = (person: Person) => (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-sm">
         <FileText className="w-4 h-4 text-blue-500" />
-        <span>{person.documents[0]?.value || '-'}</span>
+        <span>{
+          person.documents[0]?.document_type === 'CPF'
+            ? person.documents[0]?.value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+            : person.documents[0]?.value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+          || '-'
+        }</span>
       </div>
 
       {person.contacts.length > 0 && (

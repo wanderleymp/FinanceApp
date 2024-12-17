@@ -40,11 +40,7 @@ export const usePersons = () => {
 
   const handleCreatePersonByCNPJ = async (cnpj: string) => {
     try {
-      if (!user?.person?.licenses?.[0]?.id) {
-        throw new Error('Licença não encontrada');
-      }
-
-      await PersonService.createPersonByCNPJ(cnpj, user.person.licenses[0].id);
+      await PersonService.createPersonByCNPJ(cnpj);
       toast.success('Pessoa jurídica criada com sucesso');
       loadData(1);
     } catch (error) {

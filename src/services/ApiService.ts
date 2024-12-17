@@ -12,7 +12,8 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 10000,
+      timeout: 15000, // Aumentar timeout para 15 segundos
+      timeoutErrorMessage: 'A conexão com o servidor demorou muito. Tente novamente.',
     });
 
     this.setupInterceptors();
@@ -28,7 +29,7 @@ class ApiService {
   private setupInterceptors(): void {
     this.api.interceptors.request.use(
       (config) => {
-        console.error('API Request:', {
+        console.log('API Request:', {
           url: config.url,
           method: config.method,
           data: config.data
@@ -57,9 +58,15 @@ class ApiService {
         console.error('API Response Error:', {
           status: error.response?.status,
           data: error.response?.data,
-          message: error.message
+          message: error.message,
+          code: error.code
         });
         
+        if (error.code === 'ECONNABORTED') {
+          toast.error('O servidor demorou muito para responder. Verifique sua conexão ou tente novamente.');
+          return Promise.reject(new Error('Timeout de conexão'));
+        }
+
         if (error.response) {
           const status = error.response.status;
           const data = error.response.data as any;
@@ -86,7 +93,7 @@ class ApiService {
               toast.error('Ocorreu um erro. Tente novamente.');
           }
         } else if (error.request) {
-          toast.error('Não foi possível conectar ao servidor. Verifique sua conexão.');
+          toast.error('Não foi possível conectar ao servidor. Verifique sua conexão de internet.');
         } else {
           toast.error('Ocorreu um erro na requisição.');
         }
@@ -98,27 +105,16 @@ class ApiService {
   public async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     try {
       console.log('🌐 API Request:', { url, method: 'get', data: config?.data });
-      const response = await this.api.get<string>(url, config);
-      
-      console.log('🌐 Raw Response Data (Type):', typeof response.data);
-      console.log('🌐 Raw Response Data (Keys):', Object.keys(response.data || {}));
-      console.log('🌐 Raw Response Data:', JSON.stringify(response.data, null, 2));
-      
-      // Garantir que o parsing da resposta seja feito corretamente
-      const responseData = typeof response.data === 'string' 
-        ? JSON.parse(response.data) 
-        : response.data;
-
-      console.log('🌐 Parsed Response Data:', {
-        status: response.status,
-        headers: response.headers,
-        data: responseData
+      const response = await this.api.get<T>(url, {
+        ...config,
+        // Configurações específicas para cada requisição
+        timeout: 20000, // 20 segundos para requisições GET
       });
       
-      return responseData as T;
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('❌ API Response Error:', {
+        console.error('❌ API GET Error:', {
           status: error.response?.status,
           data: error.response?.data,
           message: error.message,
@@ -129,35 +125,83 @@ class ApiService {
           AuthService.logout();
         }
 
-        toast.error('Ocorreu um erro na requisição.');
+        toast.error('Não foi possível carregar os dados. Tente novamente.');
       }
       return Promise.reject(error);
     }
   }
 
-  public async post<T>(url: string, data?: object): Promise<T> {
+  public async post<T>(url: string, data?: object, config?: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await this.api.post<T, T>(url, data);
+      const response = await this.api.post<T, T>(url, data, {
+        ...config,
+        timeout: 25000, // 25 segundos para requisições POST
+      });
       return response;
     } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('❌ API POST Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+
+        const errorMessage = error.response?.data 
+          ? (error.response.data as any).message 
+          : 'Erro ao processar a solicitação';
+
+        toast.error(errorMessage);
+      }
       throw error;
     }
   }
 
-  public async put<T>(url: string, data?: object): Promise<T> {
+  public async put<T>(url: string, data?: object, config?: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await this.api.put<T, T>(url, data);
+      const response = await this.api.put<T, T>(url, data, {
+        ...config,
+        timeout: 25000, // 25 segundos para requisições PUT
+      });
       return response;
     } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('❌ API PUT Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+
+        const errorMessage = error.response?.data 
+          ? (error.response.data as any).message 
+          : 'Erro ao atualizar os dados';
+
+        toast.error(errorMessage);
+      }
       throw error;
     }
   }
 
-  public async delete<T>(url: string): Promise<T> {
+  public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await this.api.delete<T, T>(url);
+      const response = await this.api.delete<T, T>(url, {
+        ...config,
+        timeout: 20000, // 20 segundos para requisições DELETE
+      });
       return response;
     } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('❌ API DELETE Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+
+        const errorMessage = error.response?.data 
+          ? (error.response.data as any).message 
+          : 'Erro ao excluir o registro';
+
+        toast.error(errorMessage);
+      }
       throw error;
     }
   }

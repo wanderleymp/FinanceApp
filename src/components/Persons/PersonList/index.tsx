@@ -40,7 +40,11 @@ export const PersonList: React.FC = () => {
   }, [loadData]);
 
   const handleEdit = (person: Person) => {
-    navigate(`/persons/${person.id}/edit`);
+    navigate(`/persons/${person.id}/edit`, { 
+      state: { 
+        personData: person 
+      } 
+    });
   };
 
   const handleExportExcel = async () => {
@@ -68,24 +72,33 @@ export const PersonList: React.FC = () => {
     }
   };
 
+  const handleOpenContactsModal = (person: Person) => {
+    setSelectedPerson(person);
+    setIsContactsModalOpen(true);
+  };
+
   const metrics = [
     {
       title: 'Total de Pessoas',
-      value: persons.length,
+      value: pagination.total || persons.length,
       trend: 12.5,
       color: 'bg-gradient-to-br from-blue-500 to-blue-600',
       textColor: 'text-white',
     },
     {
       title: 'Pessoas Físicas',
-      value: persons.filter(p => p.person_type_id === 1).length,
+      value: pagination.total 
+        ? persons.filter(p => p.person_type_id === 1).length 
+        : persons.filter(p => p.person_type_id === 1).length,
       trend: 8.2,
       color: 'bg-gradient-to-br from-green-500 to-green-600',
       textColor: 'text-white',
     },
     {
       title: 'Pessoas Jurídicas',
-      value: persons.filter(p => p.person_type_id === 2).length,
+      value: pagination.total 
+        ? persons.filter(p => p.person_type_id === 2).length 
+        : persons.filter(p => p.person_type_id === 2).length,
       trend: -2.1,
       color: 'bg-gradient-to-br from-purple-500 to-purple-600',
       textColor: 'text-white',
@@ -115,7 +128,7 @@ export const PersonList: React.FC = () => {
         title="Gerenciamento de Pessoas"
         subtitle="Gerencie pessoas físicas e jurídicas"
         data={persons}
-        columns={columns}
+        columns={columns(handleOpenContactsModal)}
         renderCard={renderPersonCard}
         metrics={metrics}
         onEdit={handleEdit}
@@ -134,7 +147,7 @@ export const PersonList: React.FC = () => {
       {selectedPerson && (
         <>
           <PersonContactsModal
-            person={selectedPerson}
+            person={selectedPerson || {} as Person}
             isOpen={isContactsModalOpen}
             onClose={() => setIsContactsModalOpen(false)}
             onSave={() => {
