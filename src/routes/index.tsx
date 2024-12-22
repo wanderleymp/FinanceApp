@@ -2,6 +2,8 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
+import { LoginForm } from '../components/Auth/LoginForm';
+import { ProtectedRoute } from '../components/ProtectedRoute';
 
 const Dashboard = lazy(() => import('../components/Dashboard/Dashboard'));
 const PersonsList = lazy(() => import('../components/Persons/PersonsList'));
@@ -26,19 +28,85 @@ const AppRoutes: React.FC = () => {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/persons" element={<PersonsList />} />
-        <Route path="/movement-statuses" element={<MovementStatusList />} />
-        <Route path="/list-sales" element={<ListSales />} />
-        <Route path="/movements" element={<TestMovementsPage />} />
+        <Route path="/login" element={<LoginForm />} />
+        
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/persons" 
+          element={
+            <ProtectedRoute>
+              <PersonsList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/movement-statuses" 
+          element={
+            <ProtectedRoute>
+              <MovementStatusList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/list-sales" 
+          element={
+            <ProtectedRoute>
+              <ListSales />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/movements" 
+          element={
+            <ProtectedRoute>
+              <TestMovementsPage />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Novas rotas de Contratos */}
-        <Route path="/contracts" element={<ContractsList />} />
-        <Route path="/contracts/new" element={<NewContract />} />
-        <Route path="/contract-types" element={<ContractTypes />} />
-        <Route path="/contract-statuses" element={<ContractStatuses />} />
+        <Route 
+          path="/contracts" 
+          element={
+            <ProtectedRoute>
+              <ContractsList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/contracts/new" 
+          element={
+            <ProtectedRoute>
+              <NewContract />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/contract-types" 
+          element={
+            <ProtectedRoute>
+              <ContractTypes />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/contract-statuses" 
+          element={
+            <ProtectedRoute>
+              <ContractStatuses />
+            </ProtectedRoute>
+          } 
+        />
         
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Suspense>
   );

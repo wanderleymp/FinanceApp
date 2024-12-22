@@ -11,7 +11,7 @@ export class AuthService {
 
   public static async login(username: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await apiService.post<LoginResponse>('/users/login', {
+      const response = await apiService.post<LoginResponse>('/auth/login', {
         username,
         password
       });
@@ -39,7 +39,7 @@ export class AuthService {
       }
       
       // Fallback to fetching from server if no stored user
-      const response = await apiService.get<User>('/users/me');
+      const response = await apiService.get<User>('/auth/me');
       return response;
     } catch (error) {
       console.error('Get Current User Error:', error);
